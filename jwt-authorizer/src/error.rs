@@ -85,7 +85,8 @@ fn response_500() -> Response<Body> {
 }
 
 #[cfg(feature = "tonic")]
-impl From<AuthError> for Response<tonic::body::BoxBody> {
+impl From<AuthError> for Response<tonic::body::Body> {
+    #[allow(clippy::cognitive_complexity)]
     fn from(e: AuthError) -> Self {
         match e {
             AuthError::JwksRefreshError(err) => {
@@ -141,51 +142,52 @@ impl From<AuthError> for Response {
 
 /// (<https://datatracker.ietf.org/doc/html/rfc6750#section-3.1>)
 impl IntoResponse for AuthError {
+    #[allow(clippy::cognitive_complexity)]
     fn into_response(self) -> Response {
         match self {
-            AuthError::JwksRefreshError(err) => {
+            Self::JwksRefreshError(err) => {
                 tracing::error!("AuthErrors::JwksRefreshError: {}", err);
                 response_500()
             }
-            AuthError::InvalidKey(err) => {
+            Self::InvalidKey(err) => {
                 tracing::error!("AuthErrors::InvalidKey: {}", err);
                 response_500()
             }
-            AuthError::JwksSerialisationError(err) => {
+            Self::JwksSerialisationError(err) => {
                 tracing::error!("AuthErrors::JwksSerialisationError: {}", err);
                 response_500()
             }
-            AuthError::InvalidKeyAlg(err) => {
+            Self::InvalidKeyAlg(err) => {
                 debug!("AuthErrors::InvalidKeyAlg: {:?}", err);
                 response_wwwauth(
                     StatusCode::UNAUTHORIZED,
                     "error=\"invalid_token\", error_description=\"invalid key algorithm\"",
                 )
             }
-            AuthError::InvalidKid(err) => {
+            Self::InvalidKid(err) => {
                 debug!("AuthErrors::InvalidKid: {}", err);
                 response_wwwauth(
                     StatusCode::UNAUTHORIZED,
                     "error=\"invalid_token\", error_description=\"invalid kid\"",
                 )
             }
-            AuthError::InvalidToken(err) => {
+            Self::InvalidToken(err) => {
                 debug!("AuthErrors::InvalidToken: {}", err);
                 response_wwwauth(StatusCode::UNAUTHORIZED, "error=\"invalid_token\"")
             }
-            AuthError::MissingToken() => {
+            Self::MissingToken() => {
                 debug!("AuthErrors::MissingToken");
                 response_wwwauth(StatusCode::UNAUTHORIZED, "")
             }
-            AuthError::InvalidClaims() => {
+            Self::InvalidClaims() => {
                 debug!("AuthErrors::InvalidClaims");
                 response_wwwauth(StatusCode::FORBIDDEN, "error=\"insufficient_scope\"")
             }
-            AuthError::NoAuthorizer() => {
+            Self::NoAuthorizer() => {
                 debug!("AuthErrors::NoAuthorizer");
                 response_wwwauth(StatusCode::FORBIDDEN, "error=\"invalid_token\"")
             }
-            AuthError::NoAuthorizerLayer() => {
+            Self::NoAuthorizerLayer() => {
                 debug!("AuthErrors::NoAuthorizerLayer");
                 // TODO: should it be a standard error?
                 response_wwwauth(StatusCode::UNAUTHORIZED, "error=\"no_authorizer_layer\"")

@@ -27,7 +27,7 @@ where
     http_client: Option<Client>,
 }
 
-/// alias for AuthorizerBuidler (backwards compatibility)
+/// alias for `AuthorizerBuidler` (backwards compatibility)
 pub type JwtAuthorizer<C = RegisteredClaims> = AuthorizerBuilder<C>;
 
 /// authorization layer builder
@@ -35,11 +35,12 @@ impl<C> AuthorizerBuilder<C>
 where
     C: Clone + DeserializeOwned + Send + Sync,
 {
-    /// Builds Authorizer Layer from a OpenId Connect discover metadata
-    pub fn from_oidc(issuer: &str) -> AuthorizerBuilder<C> {
-        AuthorizerBuilder {
+    /// Builds Authorizer Layer from a `OpenId` Connect discover metadata
+    #[must_use]
+    pub fn from_oidc(issuer: &str) -> Self {
+        Self {
             key_source_type: KeySourceType::Discovery(issuer.to_string()),
-            refresh: Default::default(),
+            refresh: Option::default(),
             claims_checker: None,
             validation: None,
             jwt_source: JwtSource::AuthorizationHeader,
@@ -48,32 +49,33 @@ where
     }
 
     /// Builds Authorizer Layer from a JWKS endpoint
-    pub fn from_jwks_url(url: &str) -> AuthorizerBuilder<C> {
-        AuthorizerBuilder {
+    #[must_use]
+    pub fn from_jwks_url(url: &str) -> Self {
+        Self {
             key_source_type: KeySourceType::Jwks(url.to_owned()),
-            refresh: Default::default(),
+            refresh: Option::default(),
             claims_checker: None,
             validation: None,
             jwt_source: JwtSource::AuthorizationHeader,
             http_client: None,
         }
     }
-
-    pub fn from_jwks(path: &str) -> AuthorizerBuilder<C> {
-        AuthorizerBuilder {
+    #[must_use]
+    pub fn from_jwks(path: &str) -> Self {
+        Self {
             key_source_type: KeySourceType::JwksPath(path.to_owned()),
-            refresh: Default::default(),
+            refresh: Option::default(),
             claims_checker: None,
             validation: None,
             jwt_source: JwtSource::AuthorizationHeader,
             http_client: None,
         }
     }
-
-    pub fn from_jwks_text(text: &str) -> AuthorizerBuilder<C> {
-        AuthorizerBuilder {
+    #[must_use]
+    pub fn from_jwks_text(text: &str) -> Self {
+        Self {
             key_source_type: KeySourceType::JwksString(text.to_owned()),
-            refresh: Default::default(),
+            refresh: Option::default(),
             claims_checker: None,
             validation: None,
             jwt_source: JwtSource::AuthorizationHeader,
@@ -82,10 +84,11 @@ where
     }
 
     /// Builds Authorizer Layer from a RSA PEM file
-    pub fn from_rsa_pem(path: &str) -> AuthorizerBuilder<C> {
-        AuthorizerBuilder {
+    #[must_use]
+    pub fn from_rsa_pem(path: &str) -> Self {
+        Self {
             key_source_type: KeySourceType::RSA(path.to_owned()),
-            refresh: Default::default(),
+            refresh: Option::default(),
             claims_checker: None,
             validation: None,
             jwt_source: JwtSource::AuthorizationHeader,
@@ -94,10 +97,11 @@ where
     }
 
     /// Builds Authorizer Layer from an RSA PEM raw text
-    pub fn from_rsa_pem_text(text: &str) -> AuthorizerBuilder<C> {
-        AuthorizerBuilder {
+    #[must_use]
+    pub fn from_rsa_pem_text(text: &str) -> Self {
+        Self {
             key_source_type: KeySourceType::RSAString(text.to_owned()),
-            refresh: Default::default(),
+            refresh: Option::default(),
             claims_checker: None,
             validation: None,
             jwt_source: JwtSource::AuthorizationHeader,
@@ -106,10 +110,11 @@ where
     }
 
     /// Builds Authorizer Layer from a EC PEM file
-    pub fn from_ec_pem(path: &str) -> AuthorizerBuilder<C> {
-        AuthorizerBuilder {
+    #[must_use]
+    pub fn from_ec_pem(path: &str) -> Self {
+        Self {
             key_source_type: KeySourceType::EC(path.to_owned()),
-            refresh: Default::default(),
+            refresh: Option::default(),
             claims_checker: None,
             validation: None,
             jwt_source: JwtSource::AuthorizationHeader,
@@ -118,10 +123,11 @@ where
     }
 
     /// Builds Authorizer Layer from a EC PEM raw text
-    pub fn from_ec_pem_text(text: &str) -> AuthorizerBuilder<C> {
-        AuthorizerBuilder {
+    #[must_use]
+    pub fn from_ec_pem_text(text: &str) -> Self {
+        Self {
             key_source_type: KeySourceType::ECString(text.to_owned()),
-            refresh: Default::default(),
+            refresh: Option::default(),
             claims_checker: None,
             validation: None,
             jwt_source: JwtSource::AuthorizationHeader,
@@ -130,10 +136,11 @@ where
     }
 
     /// Builds Authorizer Layer from a EC PEM file
-    pub fn from_ed_pem(path: &str) -> AuthorizerBuilder<C> {
-        AuthorizerBuilder {
+    #[must_use]
+    pub fn from_ed_pem(path: &str) -> Self {
+        Self {
             key_source_type: KeySourceType::ED(path.to_owned()),
-            refresh: Default::default(),
+            refresh: Option::default(),
             claims_checker: None,
             validation: None,
             jwt_source: JwtSource::AuthorizationHeader,
@@ -142,10 +149,11 @@ where
     }
 
     /// Builds Authorizer Layer from a EC PEM raw text
-    pub fn from_ed_pem_text(text: &str) -> AuthorizerBuilder<C> {
-        AuthorizerBuilder {
+    #[must_use]
+    pub fn from_ed_pem_text(text: &str) -> Self {
+        Self {
             key_source_type: KeySourceType::EDString(text.to_owned()),
-            refresh: Default::default(),
+            refresh: Option::default(),
             claims_checker: None,
             validation: None,
             jwt_source: JwtSource::AuthorizationHeader,
@@ -154,10 +162,11 @@ where
     }
 
     /// Builds Authorizer Layer from a secret phrase
-    pub fn from_secret(secret: &str) -> AuthorizerBuilder<C> {
-        AuthorizerBuilder {
+    #[must_use]
+    pub fn from_secret(secret: &str) -> Self {
+        Self {
             key_source_type: KeySourceType::Secret(secret.to_owned()),
-            refresh: Default::default(),
+            refresh: Option::default(),
             claims_checker: None,
             validation: None,
             jwt_source: JwtSource::AuthorizationHeader,
@@ -166,7 +175,8 @@ where
     }
 
     /// Refreshes configuration for jwk store
-    pub fn refresh(mut self, refresh: Refresh) -> AuthorizerBuilder<C> {
+    #[must_use]
+    pub fn refresh(mut self, refresh: Refresh) -> Self {
         if self.refresh.is_some() {
             tracing::warn!("More than one refresh configuration found!");
         }
@@ -175,7 +185,8 @@ where
     }
 
     /// no refresh, jwks will be loaded juste once
-    pub fn no_refresh(mut self) -> AuthorizerBuilder<C> {
+    #[must_use]
+    pub fn no_refresh(mut self) -> Self {
         if self.refresh.is_some() {
             tracing::warn!("More than one refresh configuration found!");
         }
@@ -187,8 +198,9 @@ where
     }
 
     /// configures token content check (custom function), if false a 403 will be sent.
-    /// (AuthError::InvalidClaims())
-    pub fn check<F>(mut self, checker_fn: F) -> AuthorizerBuilder<C>
+    /// (`AuthError::InvalidClaims()`)
+    #[must_use]
+    pub fn check<F>(mut self, checker_fn: F) -> Self
     where
         F: Fn(&C) -> bool + Send + Sync + 'static,
     {
@@ -197,7 +209,8 @@ where
         self
     }
 
-    pub fn validation(mut self, validation: Validation) -> AuthorizerBuilder<C> {
+    #[must_use]
+    pub fn validation(mut self, validation: Validation) -> Self {
         self.validation = Some(validation);
 
         self
@@ -205,8 +218,9 @@ where
 
     /// configures the source of the bearer token
     ///
-    /// (default: AuthorizationHeader)
-    pub fn jwt_source(mut self, src: JwtSource) -> AuthorizerBuilder<C> {
+    /// (default: `AuthorizationHeader`)
+    #[must_use]
+    pub fn jwt_source(mut self, src: JwtSource) -> Self {
         self.jwt_source = src;
 
         self
@@ -216,13 +230,18 @@ where
     /// if not called, uses a default configured client
     ///
     /// (default: None)
-    pub fn http_client(mut self, http_client: Client) -> AuthorizerBuilder<C> {
+    #[must_use]
+    pub fn http_client(mut self, http_client: Client) -> Self {
         self.http_client = Some(http_client);
 
         self
     }
 
     /// Build layer
+    ///
+    /// # Errors
+    ///
+    /// [`InitError`]
     #[deprecated(since = "0.10.0", note = "please use `IntoLayer::into_layer()` instead")]
     pub async fn layer(self) -> Result<AuthorizationLayer<C>, InitError> {
         let val = self.validation.unwrap_or_default();
@@ -240,6 +259,11 @@ where
         Ok(AuthorizationLayer::new(vec![auth]))
     }
 
+    /// Build
+    ///
+    /// # Errors
+    ///
+    /// [`InitError`]
     pub async fn build(self) -> Result<Authorizer<C>, InitError> {
         let val = self.validation.unwrap_or_default();
 

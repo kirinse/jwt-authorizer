@@ -1,6 +1,9 @@
 #![doc = include_str!("../docs/README.md")]
 
-use axum::{async_trait, extract::FromRequestParts, http::request::Parts};
+use axum::{
+    extract::{FromRequestParts, OptionalFromRequestParts},
+    http::request::Parts,
+};
 use jsonwebtoken::TokenData;
 use serde::de::DeserializeOwned;
 
@@ -24,7 +27,6 @@ pub mod validation;
 #[derive(Debug, Clone, Copy, Default)]
 pub struct JwtClaims<T>(pub T);
 
-#[async_trait]
 impl<T, S> FromRequestParts<S> for JwtClaims<T>
 where
     T: DeserializeOwned + Send + Sync + Clone + 'static,
@@ -33,10 +35,21 @@ where
     type Rejection = AuthError;
 
     async fn from_request_parts(parts: &mut Parts, _: &S) -> Result<Self, Self::Rejection> {
-        if let Some(claims) = parts.extensions.get::<TokenData<T>>() {
-            Ok(JwtClaims(claims.claims.clone()))
-        } else {
-            Err(AuthError::NoAuthorizerLayer())
-        }
+        parts.extensions.get::<TokenData<T>>().map_or_else(
+            || Err(AuthError::NoAuthorizerLayer()),
+            |claims| Ok(Self(claims.claims.clone())),
+        )
+    }
+}
+
+impl<T, S> OptionalFromRequestParts<S> for JwtClaims<T>
+where
+    T: DeserializeOwned + Send + Sync + Clone + 'static,
+    S: Send + Sync,
+{
+    type Rejection = AuthError;
+
+    async fn from_request_parts(parts: &mut Parts, _: &S) -> Result<Option<Self>, Self::Rejection> {
+        Ok(parts.extensions.get::<TokenData<T>>().map(|t| Self(t.claims.clone())))
     }
 }

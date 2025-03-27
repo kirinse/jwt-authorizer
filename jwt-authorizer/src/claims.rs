@@ -26,13 +26,14 @@ impl From<NumericDate> for DateTime<Utc> {
 use time::OffsetDateTime;
 
 #[cfg(feature = "time")]
+#[allow(clippy::fallible_impl_from)]
 impl From<NumericDate> for OffsetDateTime {
     fn from(t: NumericDate) -> Self {
-        OffsetDateTime::from_unix_timestamp(t.0).unwrap()
+        Self::from_unix_timestamp(t.0).unwrap()
     }
 }
 
-#[derive(PartialEq, Debug, Clone, Deserialize, Serialize)]
+#[derive(PartialEq, Eq, Debug, Clone, Deserialize, Serialize)]
 #[serde(untagged)]
 pub enum OneOrArray<T> {
     One(T),
@@ -42,13 +43,21 @@ pub enum OneOrArray<T> {
 impl<T> OneOrArray<T> {
     pub fn iter<'a>(&'a self) -> Box<dyn Iterator<Item = &'a T> + 'a> {
         match self {
-            OneOrArray::One(v) => Box::new(std::iter::once(v)),
-            OneOrArray::Array(vector) => Box::new(vector.iter()),
+            Self::One(v) => Box::new(std::iter::once(v)),
+            Self::Array(vector) => Box::new(vector.iter()),
         }
     }
 }
 
-#[derive(PartialEq, Debug, Clone)]
+impl<'a, T> IntoIterator for &'a OneOrArray<T> {
+    type Item = &'a T;
+    type IntoIter = std::boxed::Box<(dyn std::iter::Iterator<Item = &'a T> + 'a)>;
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
+    }
+}
+
+#[derive(PartialEq, Eq, Debug, Clone)]
 pub struct StringList(Vec<String>);
 
 /// Claims mentioned in the JWT specifications.

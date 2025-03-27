@@ -1,3 +1,4 @@
+#![allow(clippy::use_self)]
 use std::{io::Read, sync::Arc};
 
 use headers::{authorization::Bearer, Authorization, HeaderMapExt};
@@ -50,6 +51,7 @@ impl<C> Authorizer<C>
 where
     C: DeserializeOwned + Clone + Send,
 {
+    #[allow(clippy::too_many_lines)]
     pub(crate) async fn build(
         key_source_type: KeySourceType,
         claims_checker: Option<ClaimsCheckerFn<C>>,
@@ -61,7 +63,7 @@ where
         Ok(match key_source_type {
             KeySourceType::RSA(path) => {
                 let key = DecodingKey::from_rsa_pem(&read_data(path.as_str())?)?;
-                Authorizer {
+                Self {
                     key_source: KeySource::SingleKeySource(Arc::new(KeyData {
                         kid: None,
                         algs: vec![
@@ -81,7 +83,7 @@ where
             }
             KeySourceType::RSAString(text) => {
                 let key = DecodingKey::from_rsa_pem(text.as_bytes())?;
-                Authorizer {
+                Self {
                     key_source: KeySource::SingleKeySource(Arc::new(KeyData {
                         kid: None,
                         algs: vec![
@@ -101,7 +103,7 @@ where
             }
             KeySourceType::EC(path) => {
                 let key = DecodingKey::from_ec_pem(&read_data(path.as_str())?)?;
-                Authorizer {
+                Self {
                     key_source: KeySource::SingleKeySource(Arc::new(KeyData {
                         kid: None,
                         algs: vec![Algorithm::ES256, Algorithm::ES384],
@@ -114,7 +116,7 @@ where
             }
             KeySourceType::ECString(text) => {
                 let key = DecodingKey::from_ec_pem(text.as_bytes())?;
-                Authorizer {
+                Self {
                     key_source: KeySource::SingleKeySource(Arc::new(KeyData {
                         kid: None,
                         algs: vec![Algorithm::ES256, Algorithm::ES384],
@@ -127,7 +129,7 @@ where
             }
             KeySourceType::ED(path) => {
                 let key = DecodingKey::from_ed_pem(&read_data(path.as_str())?)?;
-                Authorizer {
+                Self {
                     key_source: KeySource::SingleKeySource(Arc::new(KeyData {
                         kid: None,
                         algs: vec![Algorithm::EdDSA],
@@ -140,7 +142,7 @@ where
             }
             KeySourceType::EDString(text) => {
                 let key = DecodingKey::from_ed_pem(text.as_bytes())?;
-                Authorizer {
+                Self {
                     key_source: KeySource::SingleKeySource(Arc::new(KeyData {
                         kid: None,
                         algs: vec![Algorithm::EdDSA],
@@ -153,7 +155,7 @@ where
             }
             KeySourceType::Secret(secret) => {
                 let key = DecodingKey::from_secret(secret.as_bytes());
-                Authorizer {
+                Self {
                     key_source: KeySource::SingleKeySource(Arc::new(KeyData {
                         kid: None,
                         algs: vec![Algorithm::HS256, Algorithm::HS384, Algorithm::HS512],
@@ -174,7 +176,7 @@ where
                         Err(err) => Err(InitError::KeyDecodingError(err)),
                     })
                     .collect::<Result<Vec<_>, _>>()?;
-                Authorizer {
+                Self {
                     key_source: KeySource::MultiKeySource(keys.into()),
                     claims_checker,
                     validation,
@@ -192,7 +194,7 @@ where
                         Err(err) => Err(InitError::KeyDecodingError(err)),
                     })
                     .collect::<Result<Vec<_>, _>>()?;
-                Authorizer {
+                Self {
                     key_source: KeySource::MultiKeySource(keys.into()),
                     claims_checker,
                     validation,
@@ -202,7 +204,7 @@ where
             KeySourceType::Jwks(url) => {
                 let jwks_url = Url::parse(url.as_str()).map_err(|e| InitError::JwksUrlError(e.to_string()))?;
                 let key_store_manager = KeyStoreManager::new(jwks_url, refresh.unwrap_or_default());
-                Authorizer {
+                Self {
                     key_source: KeySource::KeyStoreSource(key_store_manager),
                     claims_checker,
                     validation,
@@ -214,7 +216,7 @@ where
                     .map_err(|e| InitError::JwksUrlError(e.to_string()))?;
 
                 let key_store_manager = KeyStoreManager::new(jwks_url, refresh.unwrap_or_default());
-                Authorizer {
+                Self {
                     key_source: KeySource::KeyStoreSource(key_store_manager),
                     claims_checker,
                     validation,
@@ -224,6 +226,11 @@ where
         })
     }
 
+    /// check auth
+    ///
+    /// # Errors
+    ///
+    /// [`AuthError`]
     pub async fn check_auth(&self, token: &str) -> Result<TokenData<C>, AuthError> {
         let header = decode_header(token)?;
         // TODO: (optimisation) build & store jwt_validation in key data, to avoid rebuilding it for each check
@@ -240,6 +247,7 @@ where
         Ok(token_data)
     }
 
+    #[must_use]
     pub fn extract_token(&self, h: &HeaderMap) -> Option<String> {
         match &self.jwt_source {
             layer::JwtSource::AuthorizationHeader => {

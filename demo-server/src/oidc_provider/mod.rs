@@ -1,3 +1,4 @@
+#![allow(clippy::similar_names)]
 use axum::{routing::get, Json, Router};
 use josekit::jwk::{
     alg::{ec::EcCurve, ec::EcKeyPair, ed::EdKeyPair, rsa::RsaKeyPair},
@@ -12,7 +13,7 @@ use tokio::net::TcpListener;
 
 const ISSUER_URI: &str = "http://localhost:3001";
 
-/// OpenId Connect discovery (simplified for test purposes)
+/// `OpenId` Connect discovery (simplified for test purposes)
 #[derive(Serialize, Clone)]
 struct OidcDiscovery {
     issuer: String,
@@ -119,16 +120,16 @@ pub async fn tokens() -> Json<Value> {
     let claims = Claims {
         iss: ISSUER_URI,
         sub: "b@b.com",
-        exp: 2000000000, // May 2033
-        nbf: 1516239022, // Jan 2018
+        exp: 2_000_000_000, // May 2033
+        nbf: 1_516_239_022, // Jan 2018
     };
 
     let claims_with_aud = RegisteredClaims {
         iss: Some(ISSUER_URI.to_owned()),
         sub: Some("b@b.com".to_owned()),
         aud: Some(OneOrArray::Array(vec!["aud1".to_owned(), "aud2".to_owned()])),
-        exp: Some(NumericDate(2000000000)), // May 2033
-        nbf: Some(NumericDate(1516239022)), // Jan 2018
+        exp: Some(NumericDate(2_000_000_000)), // May 2033
+        nbf: Some(NumericDate(1_516_239_022)), // Jan 2018
         iat: None,
         jti: None,
     };

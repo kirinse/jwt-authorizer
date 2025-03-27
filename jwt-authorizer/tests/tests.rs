@@ -19,13 +19,13 @@ mod tests {
         validation::Validation,
         IntoLayer, JwtAuthorizer, JwtClaims,
     };
-    use serde::Deserialize;
+    use serde::{Deserialize, Serialize};
     use tower::{util::MapErrLayer, ServiceExt};
 
     use crate::common;
     use http_body_util::BodyExt;
 
-    #[derive(Debug, Deserialize, Clone)]
+    #[derive(Debug, Deserialize, Serialize, Clone)]
     struct User {
         sub: String,
     }

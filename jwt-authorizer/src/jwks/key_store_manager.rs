@@ -29,9 +29,9 @@ pub struct Refresh {
     pub strategy: RefreshStrategy,
     /// After the refresh interval the store will/can be refreshed.
     ///
-    /// - RefreshStrategy::KeyNotFound - refresh will be performed only if a kid is not found in the store
+    /// - `RefreshStrategy::KeyNotFound` - refresh will be performed only if a kid is not found in the store
     ///      (if no kid is in the token header the alg is looked up)
-    /// - RefreshStrategy::Interval - refresh will be performed each time the refresh interval has elapsed
+    /// - `RefreshStrategy::Interval` - refresh will be performed each time the refresh interval has elapsed
     ///      (before checking a new token -> lazy behaviour)
     pub refresh_interval: Duration,
     /// don't refresh before (after an error or jwks is unawailable)
@@ -67,8 +67,8 @@ pub struct KeyStore {
 }
 
 impl KeyStoreManager {
-    pub(crate) fn new(key_url: Url, refresh: Refresh) -> KeyStoreManager {
-        KeyStoreManager {
+    pub(crate) fn new(key_url: Url, refresh: Refresh) -> Self {
+        Self {
             key_url,
             refresh,
             keystore: Arc::new(Mutex::new(KeyStore {
@@ -114,9 +114,7 @@ impl KeyStoreManager {
                                 )],
                             )
                             .await?;
-                        ks_gard
-                            .find_alg(&header.alg)
-                            .ok_or_else(|| AuthError::InvalidKeyAlg(header.alg))?
+                        ks_gard.find_alg(&header.alg).ok_or(AuthError::InvalidKeyAlg(header.alg))?
                     } else {
                         return Err(AuthError::InvalidKeyAlg(header.alg));
                     }
@@ -138,17 +136,15 @@ impl KeyStoreManager {
 
 impl KeyStore {
     fn can_refresh(&self, refresh_interval: Duration, minimal_retry: Duration) -> bool {
-        if let Some(fail_tm) = self.fail_time {
-            if let Some(load_tm) = self.load_time {
-                fail_tm.elapsed() > minimal_retry && load_tm.elapsed() > refresh_interval
-            } else {
-                fail_tm.elapsed() > minimal_retry
-            }
-        } else if let Some(load_tm) = self.load_time {
-            load_tm.elapsed() > refresh_interval
-        } else {
-            true
-        }
+        self.fail_time.map_or_else(
+            || self.load_time.is_none_or(|load_tm| load_tm.elapsed() > refresh_interval),
+            |fail_tm| {
+                self.load_time.map_or_else(
+                    || fail_tm.elapsed() > minimal_retry,
+                    |load_tm| fail_tm.elapsed() > minimal_retry && load_tm.elapsed() > refresh_interval,
+                )
+            },
+        )
     }
 
     async fn refresh(&mut self, key_url: &Url, qparam: &[(&str, &str)]) -> Result<(), AuthError> {
@@ -195,11 +191,13 @@ impl KeyStore {
     }
 
     /// Find the key in the set that matches the given key id, if any.
+    #[must_use]
     pub fn find_kid(&self, kid: &str) -> Option<&Arc<KeyData>> {
         self.keys.find_kid(kid)
     }
 
     /// Find the key in the set that matches the given key id, if any.
+    #[must_use]
     pub fn find_alg(&self, alg: &Algorithm) -> Option<&Arc<KeyData>> {
         self.keys.find_alg(alg)
     }
@@ -209,6 +207,7 @@ impl KeyStore {
     }
 
     /// Find first key.
+    #[must_use]
     pub fn find_first(&self) -> Option<&Arc<KeyData>> {
         self.keys.first()
     }

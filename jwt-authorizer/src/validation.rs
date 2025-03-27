@@ -39,33 +39,38 @@ pub struct Validation {
 
 impl Validation {
     /// new Validation with default values
+    #[must_use]
     pub fn new() -> Self {
-        Default::default()
+        Self::default()
     }
 
     /// check that the `iss` claim is a member of the values provided
+    #[must_use]
     pub fn iss<T: ToString>(mut self, items: &[T]) -> Self {
-        self.iss = Some(items.iter().map(|x| x.to_string()).collect());
+        self.iss = Some(items.iter().map(ToString::to_string).collect());
 
         self
     }
 
     /// check that the `aud` claim is a member of the items provided
+    #[must_use]
     pub fn aud<T: ToString>(mut self, items: &[T]) -> Self {
-        self.aud = Some(items.iter().map(|x| x.to_string()).collect());
+        self.aud = Some(items.iter().map(ToString::to_string).collect());
 
         self
     }
 
     /// enables or disables exp validation
-    pub fn exp(mut self, val: bool) -> Self {
+    #[must_use]
+    pub const fn exp(mut self, val: bool) -> Self {
         self.validate_exp = val;
 
         self
     }
 
     /// enables or disables nbf validation
-    pub fn nbf(mut self, val: bool) -> Self {
+    #[must_use]
+    pub const fn nbf(mut self, val: bool) -> Self {
         self.validate_nbf = val;
 
         self
@@ -73,7 +78,8 @@ impl Validation {
 
     /// Add some leeway (in seconds) to the `exp` and `nbf` validation to
     /// account for clock skew.
-    pub fn leeway(mut self, value: u64) -> Self {
+    #[must_use]
+    pub const fn leeway(mut self, value: u64) -> Self {
         self.leeway = value;
 
         self
@@ -81,7 +87,8 @@ impl Validation {
 
     /// Whether to validate the JWT cryptographic signature
     /// Very insecure to turn that off, only do it if you know what you're doing.
-    pub fn disable_validation(mut self) -> Self {
+    #[must_use]
+    pub const fn disable_validation(mut self) -> Self {
         self.validate_signature = false;
 
         self
@@ -91,6 +98,7 @@ impl Validation {
     ///
     /// If no algs are supplied default algs for the key will be used
     /// (example for a EC key, algs = [ES256, ES384]).
+    #[must_use]
     pub fn algs(mut self, algs: Vec<Algorithm>) -> Self {
         self.algs = algs;
 
@@ -133,7 +141,7 @@ impl Validation {
 
 impl Default for Validation {
     fn default() -> Self {
-        Validation {
+        Self {
             leeway: 60,
 
             validate_exp: true,

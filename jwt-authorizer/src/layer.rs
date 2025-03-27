@@ -31,7 +31,7 @@ where
 {
     type Future = BoxFuture<'static, Result<Request<B>, AuthError>>;
 
-    /// The authorizers are sequentially applied (check_auth) until one of them validates the token.
+    /// The authorizers are sequentially applied (`check_auth`) until one of them validates the token.
     /// If no authorizer validates the token the request is rejected.
     ///
     fn authorize(&self, mut request: Request<B>) -> Self::Future {
@@ -82,7 +82,8 @@ impl<C> AuthorizationLayer<C>
 where
     C: Clone + DeserializeOwned + Send,
 {
-    pub fn new(auths: Vec<Arc<Authorizer<C>>>) -> AuthorizationLayer<C> {
+    #[must_use]
+    pub const fn new(auths: Vec<Arc<Authorizer<C>>>) -> Self {
         Self { auths }
     }
 }
@@ -128,7 +129,7 @@ impl<S, C> AuthorizationService<S, C>
 where
     C: Clone + DeserializeOwned + Send,
 {
-    pub fn get_ref(&self) -> &S {
+    pub const fn get_ref(&self) -> &S {
         &self.inner
     }
 
@@ -150,7 +151,7 @@ where
     /// Authorize requests using a custom scheme.
     ///
     /// The `Authorization` header is required to have the value provided.
-    pub fn new(inner: S, auths: Vec<Arc<Authorizer<C>>>) -> AuthorizationService<S, C> {
+    pub const fn new(inner: S, auths: Vec<Arc<Authorizer<C>>>) -> Self {
         Self { inner, auths }
     }
 }
@@ -228,7 +229,7 @@ where
                     match auth {
                         Ok(req) => {
                             let svc_fut = this.service.call(req);
-                            this.state.set(State::Authorized { svc_fut })
+                            this.state.set(State::Authorized { svc_fut });
                         }
                         Err(res) => {
                             tracing::info!("err: {:?}", res);

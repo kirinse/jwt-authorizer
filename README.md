@@ -9,14 +9,14 @@ JWT authorizer Layer for Axum.
 ## Features
 
 - JWT token verification (Bearer)
-    - Algoritms: ECDSA, RSA, EdDSA, HMAC
+  - Algoritms: ECDSA, RSA, EdDSA, HMAC
 - JWKS endpoint support
-    - Configurable refresh
-    - OpenId Connect Discovery
+  - Configurable refresh
+  - OpenId Connect Discovery
 - Validation
-    - exp, nbf, iss, aud
+  - exp, nbf, iss, aud
 - Claims extraction
-    - into custom deserializable structs or into `RegisteredClaims` (default)
+  - into custom deserializable structs or into `RegisteredClaims` (default)
 - Claims checker
 - Tracing support (error logging)
 - *tonic* support

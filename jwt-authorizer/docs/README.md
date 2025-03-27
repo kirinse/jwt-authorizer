@@ -5,18 +5,17 @@ JWT authoriser Layer for Axum and Tonic.
 ## Features
 
 - JWT token verification (Bearer)
-    - Algoritms: ECDSA, RSA, EdDSA, HMAC
+  - Algoritms: `ECDSA`, `RSA`, `EdDSA`, `HMAC`
 - JWKS endpoint support
-    - Configurable refresh
-    - OpenId Connect Discovery
+  - Configurable refresh
+  - `OpenId` Connect Discovery
 - Validation
-    - exp, nbf, iss, aud
+  - exp, nbf, iss, aud
 - Claims extraction
 - Claims checker
 - Tracing support (error logging)
 - *tonic* support
 - multiple authorizers
-
 
 ## Usage Example
 
@@ -74,12 +73,11 @@ let jwt_auth: JwtAuthorizer<Value> = JwtAuthorizer::from_oidc("https://accounts.
 
 ```
 
-
-## ClaimsChecker
+## `ClaimsChecker`
 
 A check function (mapping deserialized claims to boolean) can be added to the authorizer.
 
-A check failure results in a 403 (WWW-Authenticate: Bearer error="insufficient_scope") error.
+A check failure results in a 403 (WWW-Authenticate: Bearer `error="insufficient_scope"`) error.
 
 Example:
 

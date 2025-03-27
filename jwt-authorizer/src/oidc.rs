@@ -3,7 +3,7 @@ use serde::Deserialize;
 
 use crate::error::InitError;
 
-/// OpenId Connect discovery (simplified for test purposes)
+/// `OpenId` Connect discovery (simplified for test purposes)
 #[derive(Deserialize, Clone)]
 pub struct OidcDiscovery {
     pub jwks_uri: String,
@@ -13,7 +13,7 @@ fn discovery_url(issuer: &str) -> Result<Url, InitError> {
     let mut url = Url::parse(issuer).map_err(|e| InitError::DiscoveryError(e.to_string()))?;
 
     url.path_segments_mut()
-        .map_err(|_| InitError::DiscoveryError(format!("Issuer URL error! ('{issuer}' cannot be a base)")))?
+        .map_err(|()| InitError::DiscoveryError(format!("Issuer URL error! ('{issuer}' cannot be a base)")))?
         .pop_if_empty()
         .extend(&[".well-known", "openid-configuration"]);
 

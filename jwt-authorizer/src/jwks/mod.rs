@@ -13,7 +13,7 @@ pub mod key_store_manager;
 
 #[derive(Clone)]
 pub enum KeySource {
-    /// KeyDataSource managing a refreshable key sets
+    /// `KeyDataSource` managing a refreshable key sets
     KeyStoreSource(KeyStoreManager),
     /// Manages public key sets, initialized on startup
     MultiKeySource(KeySet),
@@ -30,12 +30,8 @@ pub struct KeyData {
 }
 
 fn get_valid_algs(key: &Jwk) -> Vec<Algorithm> {
-    if let Some(key_alg) = key.common.key_algorithm {
-        // if alg is not correct => no valid algs => empty array
-        Algorithm::from_str(key_alg.to_string().as_str()).map_or(vec![], |a| vec![a])
-    } else {
-        // guessing valid algs from key structure
-        match key.algorithm {
+    key.common.key_algorithm.map_or_else(
+        || match key.algorithm {
             AlgorithmParameters::EllipticCurve(_) => {
                 vec![Algorithm::ES256, Algorithm::ES384]
             }
@@ -49,13 +45,19 @@ fn get_valid_algs(key: &Jwk) -> Vec<Algorithm> {
             ],
             AlgorithmParameters::OctetKey(_) => vec![Algorithm::EdDSA],
             AlgorithmParameters::OctetKeyPair(_) => vec![Algorithm::HS256, Algorithm::HS384, Algorithm::HS512],
-        }
-    }
+        },
+        |key_alg| Algorithm::from_str(key_alg.to_string().as_str()).map_or(vec![], |a| vec![a]),
+    )
 }
 
 impl KeyData {
-    pub fn from_jwk(key: &Jwk) -> Result<KeyData, jsonwebtoken::errors::Error> {
-        Ok(KeyData {
+    /// Create `KeyData` from `Jwk`
+    ///
+    /// # Errors
+    ///
+    /// [`jsonwebtoken::errors::Error`]
+    pub fn from_jwk(key: &Jwk) -> Result<Self, jsonwebtoken::errors::Error> {
+        Ok(Self {
             kid: key.common.key_id.clone(),
             algs: get_valid_algs(key),
             key: DecodingKey::from_jwk(key)?,
@@ -68,25 +70,25 @@ pub struct KeySet(Vec<Arc<KeyData>>);
 
 impl From<Vec<Arc<KeyData>>> for KeySet {
     fn from(value: Vec<Arc<KeyData>>) -> Self {
-        KeySet(value)
+        Self(value)
     }
 }
 
 impl KeySet {
     /// Find the key in the set that matches the given key id, if any.
+    #[must_use]
     pub fn find_kid(&self, kid: &str) -> Option<&Arc<KeyData>> {
-        self.0.iter().find(|k| match &k.kid {
-            Some(k) => k == kid,
-            None => false,
-        })
+        self.0.iter().find(|k| k.kid.as_ref().is_some_and(|k| k == kid))
     }
 
     /// Find the key in the set that matches the given key id, if any.
+    #[must_use]
     pub fn find_alg(&self, alg: &Algorithm) -> Option<&Arc<KeyData>> {
         self.0.iter().find(|k| k.algs.contains(alg))
     }
 
     /// Find first key.
+    #[must_use]
     pub fn first(&self) -> Option<&Arc<KeyData>> {
         self.0.first()
     }
@@ -102,11 +104,16 @@ impl KeySet {
 }
 
 impl KeySource {
+    /// get key
+    ///
+    /// # Errors
+    ///
+    /// [`AuthError`]
     pub async fn get_key(&self, header: Header) -> Result<Arc<KeyData>, AuthError> {
         match self {
-            KeySource::KeyStoreSource(kstore) => kstore.get_key(&header).await,
-            KeySource::MultiKeySource(keys) => keys.get_key(&header).cloned(),
-            KeySource::SingleKeySource(key) => Ok(key.clone()),
+            Self::KeyStoreSource(kstore) => kstore.get_key(&header).await,
+            Self::MultiKeySource(keys) => keys.get_key(&header).cloned(),
+            Self::SingleKeySource(key) => Ok(key.clone()),
         }
     }
 }

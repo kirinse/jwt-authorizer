@@ -1,4 +1,5 @@
 //! Demo server - for demo and testing purposes
+#![allow(clippy::similar_names)]
 
 use axum::{routing::get, Router};
 use jwt_authorizer::{
@@ -19,6 +20,13 @@ struct User {
     sub: String,
 }
 
+// claims checker function
+fn claim_checker(u: &User) -> bool {
+    info!("checking claims: {} -> {}", u.sub, u.sub.contains('@'));
+
+    u.sub.contains('@') // must be an email
+}
+
 #[tokio::main]
 async fn main() -> Result<(), InitError> {
     tracing_subscriber::registry()
@@ -27,13 +35,6 @@ async fn main() -> Result<(), InitError> {
         ))
         .with(tracing_subscriber::fmt::layer())
         .init();
-
-    // claims checker function
-    fn claim_checker(u: &User) -> bool {
-        info!("checking claims: {} -> {}", u.sub, u.sub.contains('@'));
-
-        u.sub.contains('@') // must be an email
-    }
 
     // starting oidc provider (discovery is needed by from_oidc())
     let issuer_uri = oidc_provider::run_server();
